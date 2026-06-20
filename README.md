@@ -65,6 +65,32 @@ void loop() {
 }
 ```
 
+### platformio.ini
+
+```ini
+[env]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+framework = arduino
+
+[env:m5stack-stopwatch]
+board = esp32s3box
+board_build.partitions = default_16MB.csv
+board_upload.flash_size = 16MB
+board_upload.maximum_size = 16777216
+board_build.filesystem = littlefs
+board_build.arduino.memory_type = qio_opi
+monitor_speed = 115200
+build_flags =
+    -DESP32S3
+    -DBOARD_HAS_PSRAM
+    -DCORE_DEBUG_LEVEL=5
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+lib_deps =
+    M5Unified = https://github.com/m5stack/M5Unified
+    https://github.com/nananauno/M5GuruguruAvatar.git
+```
+
 ## API
 
 | Method | Description |
