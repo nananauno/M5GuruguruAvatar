@@ -1,0 +1,22 @@
+# PlatformIO
+.pio
+.pioenvs
+.piolibdeps
+.vscode
+include/
+lib/
+test/
+platformio.ini
+
+# Test / development files
+src/main.cpp
+src/main.c
+data/
+
+# macOS
+.DS_Store
+
+# IDE / editor
+*.bak
+*.swp
+*~
