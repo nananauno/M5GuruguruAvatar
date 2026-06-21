@@ -97,6 +97,7 @@ lib_deps =
 |--------|-------------|
 | `bool init(int numDir, int imgWidth, int imgHeight)` | Mount LittleFS, load PNG images, and start the internal draw task. Returns `false` if LittleFS fails to mount. |
 | `void trackFace(int x, int y)` | Update face direction from a touch coordinate. Call this every time a touch event is received. |
+| `void setRotation(uint8_t r)` | Rotate the display. Uses the same convention as `M5.Display.setRotation()`: 0=0°, 1=90°, 2=180°, 3=270°. |
 | `void end()` | Stop the draw task and free all resources. Called automatically by the destructor. |
 
 ## License

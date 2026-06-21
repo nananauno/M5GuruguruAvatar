@@ -21,6 +21,9 @@ public:
   // Update the face direction based on a touch coordinate.
   void trackFace(int touchX, int touchY);
 
+  // Set display rotation (same convention as M5Unified setRotation: 0-3 = 0/90/180/270 degrees).
+  void setRotation(uint8_t r) { M5.Display.setRotation(r); }
+
   // Stop the draw task and free all resources.
   void end();
 
