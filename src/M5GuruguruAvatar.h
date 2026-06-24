@@ -27,15 +27,21 @@ public:
   // Stop the draw task and free all resources.
   void end();
 
-private:
-  static void drawTask(void* arg);
-  int getDirection(int touchX, int touchY) const;
+protected:
+  virtual void drawFrame();
+  virtual void drawOverlay(M5Canvas* canvas) {}
 
   int _imgWidth  = 251;
   int _imgHeight = 240;
   int _currentDir = AVATAR_CENTER_DIR;
 
   M5Canvas* _canvas[AVATAR_NUM_DIR] = {};
+  M5Canvas* _composite = nullptr;
+
+private:
+  static void drawTask(void* arg);
+  int getDirection(int touchX, int touchY) const;
+
   TaskHandle_t _taskHandle = nullptr;
   bool _running = false;
 };
