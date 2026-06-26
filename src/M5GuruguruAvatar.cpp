@@ -27,6 +27,10 @@ bool M5GuruguruAvatar::init(int imgWidth, int imgHeight) {
     }
   }
 
+  _composite = new M5Canvas(&M5.Display);
+  _composite->setColorDepth(16);
+  _composite->createSprite(M5.Display.width(), M5.Display.height());
+
   _running = true;
   xTaskCreatePinnedToCore(drawTask, "AvatarDraw", 4096, this, 1, &_taskHandle, 1);
   return true;
@@ -42,6 +46,8 @@ void M5GuruguruAvatar::end() {
     vTaskDelete(_taskHandle);
     _taskHandle = nullptr;
   }
+  delete _composite;
+  _composite = nullptr;
   for (int i = 0; i < AVATAR_NUM_DIR; i++) {
     delete _canvas[i];
     _canvas[i] = nullptr;
@@ -56,18 +62,25 @@ M5GuruguruAvatar::~M5GuruguruAvatar() {
 void M5GuruguruAvatar::drawTask(void* arg) {
   auto* self = static_cast<M5GuruguruAvatar*>(arg);
   while (self->_running) {
-    float zx = (float)M5.Display.width()  / self->_imgWidth;
-    float zy = (float)M5.Display.height() / self->_imgHeight;
-    M5.Display.startWrite();
-    self->_canvas[self->_currentDir]->pushRotateZoom(
-      M5.Display.width()  / 2,
-      M5.Display.height() / 2,
-      0.0f, zx, zy
-    );
-    M5.Display.endWrite();
+    self->drawFrame();
     vTaskDelay(pdMS_TO_TICKS(33));  // ~30 fps
   }
   vTaskDelete(nullptr);
+}
+
+void M5GuruguruAvatar::drawFrame() {
+  float zx = (float)M5.Display.width()  / _imgWidth;
+  float zy = (float)M5.Display.height() / _imgHeight;
+  _canvas[_currentDir]->pushRotateZoom(
+    _composite,
+    M5.Display.width()  / 2,
+    M5.Display.height() / 2,
+    0.0f, zx, zy
+  );
+  drawOverlay(_composite);
+  M5.Display.startWrite();
+  _composite->pushSprite(0, 0);
+  M5.Display.endWrite();
 }
 
 int M5GuruguruAvatar::getDirection(int touchX, int touchY) const {

@@ -95,10 +95,27 @@ lib_deps =
 
 | Method | Description |
 |--------|-------------|
-| `bool init(int numDir, int imgWidth, int imgHeight)` | Mount LittleFS, load PNG images, and start the internal draw task. Returns `false` if LittleFS fails to mount. |
+| `bool init(int imgWidth, int imgHeight)` | Mount LittleFS, load PNG images, and start the internal draw task. Returns `false` if LittleFS fails to mount. |
 | `void trackFace(int x, int y)` | Update face direction from a touch coordinate. Call this every time a touch event is received. |
 | `void setRotation(uint8_t r)` | Rotate the display. Uses the same convention as `M5.Display.setRotation()`: 0=0°, 1=90°, 2=180°, 3=270°. |
 | `void end()` | Stop the draw task and free all resources. Called automatically by the destructor. |
+
+### Custom Overlay
+
+You can subclass `M5GuruguruAvatar` and override `drawOverlay()` to draw anything on top of the avatar each frame. The `canvas` is a screen-sized sprite, so what you draw here is composited with the avatar before being pushed to the display in a single transfer — no flickering.
+
+```cpp
+class MyAvatar : public M5GuruguruAvatar {
+protected:
+  void drawOverlay(M5Canvas* canvas) override {
+    canvas->setTextColor(TFT_WHITE);
+    canvas->setTextSize(2);
+    canvas->drawCenterString("Hello!", canvas->width() / 2, canvas->height() / 2);
+  }
+};
+```
+
+If you need full control over the rendering pipeline, override `drawFrame()` instead.
 
 ## License
 
