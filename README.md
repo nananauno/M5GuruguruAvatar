@@ -1,6 +1,7 @@
 # M5GuruguruAvatar
 A cute animated character library that follows your finger (touch) on the M5Stack StopWatch's round AMOLED display.
 - 9-direction head tracking
+- Automatic blinking (random interval, built-in by default)
 
 Inspired by @rotejin's tomari-guruguru project.
 
@@ -24,20 +25,21 @@ Image preparation: Please refer to @rotejin's [tomari-guruguru](https://github.c
 3. Upload your sprite sheet and adjust the grid settings.
 4. Click **Split Sprites** to generate individual images.
 5. Download the sliced images and rename them as `dir0.png` to `dir8.png`.
+6. Prepare closed-eye versions of each image and rename them as `dir0_close.png` to `dir8_close.png`. If a close image is missing, the open image is used as a fallback.
 
 *Image mapping:*
-- `dir0`: Top-Left
-- `dir1`: Top
-- `dir2`: Top-Right
-- `dir3`: Left
-- `dir4`: Center (Front) ← Default
-- `dir5`: Right
-- `dir6`: Bottom-Left
-- `dir7`: Bottom
-- `dir8`: Bottom-Right
+- `dir0` / `dir0_close`: Top-Left
+- `dir1` / `dir1_close`: Top
+- `dir2` / `dir2_close`: Top-Right
+- `dir3` / `dir3_close`: Left
+- `dir4` / `dir4_close`: Center (Front) ← Default
+- `dir5` / `dir5_close`: Right
+- `dir6` / `dir6_close`: Bottom-Left
+- `dir7` / `dir7_close`: Bottom
+- `dir8` / `dir8_close`: Bottom-Right
 
 ### Flashing to Device
-1. Place your character images (`dir0.png` to `dir8.png`) in the `data/` folder of the project.
+1. Place your character images (`dir0.png` to `dir8.png` and `dir0_close.png` to `dir8_close.png`) in the `data/` folder of the project.
 2. Upload the firmware **and** the LittleFS filesystem (images) to your M5StopWatch.
    - **PlatformIO**: `Upload` and then `Upload Filesystem Image`
    - **Arduino IDE**: Use the [Arduino LittleFS Uploader](https://github.com/earlephilhower/arduino-littlefs-upload) plugin
@@ -95,9 +97,11 @@ lib_deps =
 
 | Method | Description |
 |--------|-------------|
-| `bool init(int imgWidth, int imgHeight)` | Mount LittleFS, load PNG images, and start the internal draw task. Returns `false` if LittleFS fails to mount. |
+| `bool init(int imgWidth, int imgHeight)` | Mount LittleFS, load PNG images, and start the internal draw task. Automatic blinking is enabled by default. Returns `false` if LittleFS fails to mount. |
 | `void trackFace(int x, int y)` | Update face direction from a touch coordinate. Call this every time a touch event is received. |
 | `void setRotation(uint8_t r)` | Rotate the display. Uses the same convention as `M5.Display.setRotation()`: 0=0°, 1=90°, 2=180°, 3=270°. |
+| `void setEyeClose(bool close)` | Manually force eyes open (`false`) or closed (`true`). Ignored when an `EyeController` is active. |
+| `void setEyeController(M5Guruguru::EyeController* controller)` | Replace the built-in blink controller with a custom one. Pass `nullptr` to disable blinking entirely. |
 | `void end()` | Stop the draw task and free all resources. Called automatically by the destructor. |
 
 ### Custom Overlay
@@ -116,6 +120,29 @@ protected:
 ```
 
 If you need full control over the rendering pipeline, override `drawFrame()` instead.
+
+### Custom Blink Controller
+
+You can subclass `M5Guruguru::EyeController` to implement custom blink patterns (e.g. forced close, double blink).
+
+```cpp
+#include <EyeController.h>
+
+class AlwaysClosedEyes : public M5Guruguru::EyeController {
+public:
+  bool shouldCloseEyes() override { return true; }
+  void update() override {}
+};
+
+AlwaysClosedEyes myEyes;
+avatar.setEyeController(&myEyes);
+```
+
+Pass `nullptr` to disable blinking entirely:
+
+```cpp
+avatar.setEyeController(nullptr);
+```
 
 ## License
 

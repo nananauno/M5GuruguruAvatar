@@ -2,9 +2,7 @@
 
 #include <LittleFS.h>
 #include <M5Unified.h>
-
-// Future: replace bool init() with a DirectionMode enum, e.g.:
-// enum class DirectionMode { Dir9, Dir18 };
+#include "EyeController.h"
 
 static constexpr int AVATAR_NUM_DIR = 9;
 static constexpr int AVATAR_CENTER_DIR = AVATAR_NUM_DIR / 2;  // 4
@@ -27,9 +25,13 @@ public:
   // Stop the draw task and free all resources.
   void end();
 
+  void setEyeController(M5Guruguru::EyeController* controller);
+  void setEyeClose(bool close);
+
 protected:
   virtual void drawFrame();
   virtual void drawOverlay(M5Canvas* canvas) {}
+  virtual M5Canvas* getCurrentCanvas();
 
   int _imgWidth  = 251;
   int _imgHeight = 240;
@@ -38,10 +40,17 @@ protected:
   M5Canvas* _canvas[AVATAR_NUM_DIR] = {};
   M5Canvas* _composite = nullptr;
 
+  M5Guruguru::EyeController* _eyeController = nullptr;
+
+  bool _eyeClose = false;
+  M5Canvas* _canvasClose[AVATAR_NUM_DIR] = {};
+
 private:
   static void drawTask(void* arg);
   int getDirection(int touchX, int touchY) const;
 
   TaskHandle_t _taskHandle = nullptr;
   bool _running = false;
+
+  M5Guruguru::EyeController _defaultEyeController;
 };

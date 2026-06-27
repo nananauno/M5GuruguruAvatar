@@ -13,6 +13,7 @@ bool M5GuruguruAvatar::init(int imgWidth, int imgHeight) {
 
   for (int i = 0; i < AVATAR_NUM_DIR; i++) {
     _canvas[i] = new M5Canvas(&M5.Display);
+    _canvas[i]->setPsram(true);
     _canvas[i]->setColorDepth(16);
     _canvas[i]->createSprite(_imgWidth, _imgHeight);
 
@@ -31,10 +32,39 @@ bool M5GuruguruAvatar::init(int imgWidth, int imgHeight) {
   _composite->setColorDepth(16);
   _composite->createSprite(M5.Display.width(), M5.Display.height());
 
+
+  // Load closed-eye images
+  for (int i = 0; i < AVATAR_NUM_DIR; i++) {
+    _canvasClose[i] = new M5Canvas(&M5.Display);
+    _canvasClose[i]->setPsram(true);
+    _canvasClose[i]->setColorDepth(16);
+    _canvasClose[i]->createSprite(_imgWidth, _imgHeight);
+
+    String path = String("/dir") + i + "_close.png";
+    if (_canvasClose[i]->drawPngFile(LittleFS, path.c_str())) {
+      Serial.printf("[Avatar] Loaded: %s\n", path.c_str());
+    } else {
+      Serial.printf("[Avatar] Missing close image: %s (fallback to open)\n", path.c_str());
+      // Fallback: copy from open-eye canvas
+      _canvas[i]->pushSprite(_canvasClose[i], 0, 0);
+    }
+  }
+  _eyeController = &_defaultEyeController;
+
   _running = true;
   xTaskCreatePinnedToCore(drawTask, "AvatarDraw", 4096, this, 1, &_taskHandle, 1);
   return true;
 }
+
+void M5GuruguruAvatar::setEyeClose(bool close) {
+  _eyeClose = close;
+}
+
+
+void M5GuruguruAvatar::setEyeController(M5Guruguru::EyeController* controller) {
+  _eyeController = controller;
+}
+
 
 void M5GuruguruAvatar::trackFace(int touchX, int touchY) {
   _currentDir = getDirection(touchX, touchY);
@@ -51,6 +81,8 @@ void M5GuruguruAvatar::end() {
   for (int i = 0; i < AVATAR_NUM_DIR; i++) {
     delete _canvas[i];
     _canvas[i] = nullptr;
+    delete _canvasClose[i];
+    _canvasClose[i] = nullptr;
   }
 }
 
@@ -58,7 +90,6 @@ M5GuruguruAvatar::~M5GuruguruAvatar() {
   end();
 }
 
-// static
 void M5GuruguruAvatar::drawTask(void* arg) {
   auto* self = static_cast<M5GuruguruAvatar*>(arg);
   while (self->_running) {
@@ -71,7 +102,8 @@ void M5GuruguruAvatar::drawTask(void* arg) {
 void M5GuruguruAvatar::drawFrame() {
   float zx = (float)M5.Display.width()  / _imgWidth;
   float zy = (float)M5.Display.height() / _imgHeight;
-  _canvas[_currentDir]->pushRotateZoom(
+  M5Canvas* src = getCurrentCanvas();
+  src->pushRotateZoom(
     _composite,
     M5.Display.width()  / 2,
     M5.Display.height() / 2,
@@ -82,6 +114,17 @@ void M5GuruguruAvatar::drawFrame() {
   _composite->pushSprite(0, 0);
   M5.Display.endWrite();
 }
+
+M5Canvas* M5GuruguruAvatar::getCurrentCanvas() {
+  if (_eyeController) {
+    _eyeController->update();
+    return _eyeController->shouldCloseEyes() 
+           ? _canvasClose[_currentDir] 
+           : _canvas[_currentDir];
+  }
+  return _eyeClose ? _canvasClose[_currentDir] : _canvas[_currentDir];
+}
+
 
 int M5GuruguruAvatar::getDirection(int touchX, int touchY) const {
   int cx = M5.Display.width()  / 2;
